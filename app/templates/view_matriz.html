@@ -1,0 +1,95 @@
+{% extends 'layout/principal.html' %}
+
+{% block title %}
+    Upload Archivos
+{% endblock %}
+
+{% block content %}
+{% if message: %}
+<p> Mensaje: {{ message }}    </p>
+{% endif %}
+<div class="container" style="background-color: #fff; padding: 3%;">
+  <div align="center">
+    <h3>{{ name_analysis }} - Matriz de conceptos</h3>
+  </div>
+  <a href="{{ url_for('view_analysis', id_analysis=id_analysis) }}" class="btn btn-success" title="Atras"><i class="fas fa-reply text-white"></i></a>
+  <br/><br/>
+  <div class="table-responsive">
+    <table class="table table-bordered table-hover">
+      <thead>
+        <tr align="center">
+          <th>Documentos</th>
+          {% for concept in concepts %}
+            <th style="min-width: 130px;">{{ concept['concept'] }}</th>
+          {% endfor %}
+        </tr>
+      </thead>
+      <tbody>
+        {% for file in files %}
+        <tr>
+          <td>{{ file['file'] }}</td>
+          {% for concept in concepts %}
+            <td >
+              {% for result in results %}
+                {% if result['id_file'] == file['id_file'] and result['id_concept'] == concept['id_concept']: %}
+                  {% if result['percentage'] == '0.0%': %}
+                    <font style="color: red;">NO</font>
+                  {% else: %}
+                    <font style="color: blue;">{{ result['percentage'] }}</font>
+                    {% for sentence in sentences %}
+                      {% for s in sentence %}
+                        {% if s['id_result'] == result['id_result']: %}
+                          <input type="hidden" class="id_{{ result['id_result'] }}" value="{{ s['sentence'] }}"/>
+                        {% endif %}
+                      {% endfor %}
+                    {% endfor %}
+                    <button class="btn btn-primary btn-sm" href="#view_sentences" data-toggle="modal" data-id="{{ result['id_result'] }}" title="Ver oraciones con mayor coincidencia."><i class="fa fa-eye"></i></button>
+                  {% endif %}
+                {% endif %}
+              {% endfor %}
+            </td>
+          {% endfor %}
+        </tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- Modal -->
+<div class="modal fade" id="view_sentences" role="dialog">
+  <div class="modal-dialog">
+
+    <!-- Modal content-->
+    <div class="modal-content">
+      <div class="modal-header">
+        <h4 class="modal-title">Oraciones</h4>
+        <button type="button" class="close" data-dismiss="modal">&times;</button>
+      </div>
+      <div class="modal-body">
+        <ul>
+          <li id="sentence1"></li>
+          <li id="sentence2"></li>
+          <li id="sentence3"></li>
+        </ul>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-default" data-dismiss="modal">Cerrar</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  $(function () {
+    $('#view_sentences').on('show.bs.modal', function (event) {
+      var button = $(event.relatedTarget);
+      var id = button.data('id');
+      var sentences = document.getElementsByClassName("id_"+id);
+      $('#sentence1').html(sentences[0].value);
+      $('#sentence2').html(sentences[1].value);
+      $('#sentence3').html(sentences[2].value);
+    });
+  });
+</script>
+{% endblock %}

@@ -1,0 +1,403 @@
+{% extends 'layout/principal.html' %}
+
+{% block title %}
+Upload Archivos
+{% endblock %}
+
+{% block head %}
+<style>
+  .concept_edit {
+    display: none;
+  }
+
+  .ex_table {
+    table-layout: fixed;
+    width: 100%;
+  }
+
+  .ex_table tr td {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    padding: 5px;
+    border: 1px solid #aaa;
+  }
+
+  .ex_table .cell_2 {
+    width: 100px;
+  }
+
+  /* The Modal (background) */
+  .fondo {
+    display: none;
+    /* Hidden by default */
+    position: fixed;
+    /* Stay in place */
+    z-index: 1;
+    /* Sit on top */
+    padding-top: 100px;
+    /* Location of the box */
+    left: 0;
+    top: 0;
+    width: 100%;
+    /* Full width */
+    height: 100%;
+    /* Full height */
+    overflow: auto;
+    /* Enable scroll if needed */
+    background-color: rgb(0, 0, 0);
+    /* Fallback color */
+    background-color: rgba(0, 0, 0, 0.4);
+    /* Black w/ opacity */
+  }
+
+  /* LOADER */
+
+  #loader {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    z-index: 1;
+    width: 150px;
+    height: 150px;
+    margin: -75px 0 0 -75px;
+    border: 16px solid #f3f3f3;
+    border-radius: 50%;
+    border-top: 16px solid #3498db;
+    width: 120px;
+    height: 120px;
+    -webkit-animation: spin 2s linear infinite;
+    animation: spin 2s linear infinite;
+  }
+
+  @-webkit-keyframes spin {
+    0% {
+      -webkit-transform: rotate(0deg);
+    }
+
+    100% {
+      -webkit-transform: rotate(360deg);
+    }
+  }
+
+  @keyframes spin {
+    0% {
+      transform: rotate(0deg);
+    }
+
+    100% {
+      transform: rotate(360deg);
+    }
+  }
+
+  /* Add animation to "page content" */
+  .animate-bottom {
+    position: relative;
+    -webkit-animation-name: animatebottom;
+    -webkit-animation-duration: 1s;
+    animation-name: animatebottom;
+    animation-duration: 1s
+  }
+
+  @-webkit-keyframes animatebottom {
+    from {
+      bottom: -100px;
+      opacity: 0
+    }
+
+    to {
+      bottom: 0px;
+      opacity: 1
+    }
+  }
+
+  @keyframes animatebottom {
+    from {
+      bottom: -100px;
+      opacity: 0
+    }
+
+    to {
+      bottom: 0;
+      opacity: 1
+    }
+  }
+
+  #drop-area.highlight {
+    background-color: white;
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+{% if message: %}
+<p> Mensaje: {{ message }} </p>
+{% endif %}
+<div class="container">
+  <div align="center">
+    <h3>{{ name_analysis }}</h3>
+  </div>
+  <div class="d-sm-flex align-items-center justify-content-between mb-4">
+    <a href="{{ url_for('home') }}" class="btn btn-success" title="Atras"><i class="fas fa-reply text-white"></i></a>
+    {% if status == '0': %}
+      {% if (files|count) == 0 or (concepts|count) == 0: %}
+        <a href="#" title="Analizar los archivos y conceptos para generar la matriz." class="btn btn-primary disabled"><i
+        class="fa fa-search text-white"></i> Analizar</a>
+      {% else: %}
+        <a href="/get_matriz/{{ id_analysis }}" onclick="showLoader()" title="Analizar los archivos y conceptos para generar la matriz." class="btn btn-primary"><i
+        class="fa fa-search text-white"></i> Analizar</a>
+      {% endif %}
+    
+    {% else: %}
+    <a href="/view_matriz/{{ id_analysis }}" title="Ver los resultados de la matriz de conceptos" class="btn btn-primary"><i class="fa fa-check text-white"></i> Ver
+      Matriz</a>
+    {% endif %}
+  </div>
+
+  <div class="row">
+    <div class="col-md-5" style="padding: 0%; border: solid 2px;">
+      {% if status == '0': %}
+        <div style="padding: 30px; border: solid 1px;" id="drop-area">
+      {% else: %}
+        <div style="padding: 30px; border: solid 1px;">
+      {% endif %}
+        <div align="center">
+          <h4>Archivos <a data-toggle="tooltip" title="Los artículos que se analizan deben estar en ingles y en formato PDF, para cargar artículos puede arrastrarlos dentro de esta sección, o presionar el bonto +."><i class="fa fa-info-circle"></i></a></h4>
+        </div>
+        {% if status == '0': %}
+        <div align="right">
+          <button type="button" class="btn btn-primary" title="Agregar archivos" data-toggle="modal" data-target="#modal_add_files">+</button>
+        </div>
+        {% endif %}
+
+        <table class="ex_table">
+          <tr>
+            <th>Documentos ({{ files|count }})</th>
+            <th class="cell_2">Opciones</th>
+          </tr>
+          {% for file in files %}
+          <tr>
+            <td title="{{ file['name'] }}">{{ file['name'] }}</td>
+            <td align="center">
+              <button class="btn btn-primary btn-sm"
+                onclick="change_file('/static/uploads/files{{ id_analysis }}/{{ file['file'] }}')" title="Mostrar documento"><i
+               class="fa fa-eye"></i></button>
+              {% if status == '0': %}
+              <a class="btn btn-danger btn-sm" title="Eliminar documento" href="/delete_file/{{ id_analysis }}/{{ file['file'] }}"><i
+                  class="fa fa-trash"></i></a>
+              {% endif %}
+            </td>
+          </tr>
+          {% endfor %}
+        </table>
+      </div>
+      <div style="padding: 30px; border: solid 1px;">
+        <div align="center">
+          <h4>Conceptos <a data-toggle="tooltip" title="Los conceptos deben estar en ingles y tener un maximo de 3 o 4 palabras, para agregar mas conceptos presione +."><i class="fa fa-info-circle"></i></a></h4>
+        </div>
+        {% if status == '0': %}
+        <div align="right">
+          <button type="button" title="Agregar conceptos" class="btn btn-primary" data-toggle="modal" data-target="#modal_add_concepts">+</button>
+        </div>
+        {% endif %}
+        <table class="ex_table">
+          <tr>
+            <th>Conceptos ({{ concepts|count }})</th>
+            {% if status == '0': %}
+            <th class="cell_2">Opciones</th>
+            {% endif %}
+          </tr>
+          {% for concept in concepts %}
+          <tr>
+            <td title="{{ concept['concept'] }}">{{ concept['concept'] }}</td>
+            {% if status == '0': %}
+            <td align="center">
+              <button type="button" class="btn btn-primary btn-sm"
+                onclick="edit_concept('{{ concept['id_concept'] }}','{{ concept['concept'] }}')" title="Editar concepto"><i
+                  class="fa fa-edit"></i></button>
+              <a class="btn btn-danger btn-sm" title="Eliminar concepto" href="/delete_concept/{{ id_analysis }}/{{ concept['concept'] }}"><i
+                  class="fa fa-trash"></i></a>
+            </td>
+            {% endif %}
+          </tr>
+          {% endfor %}
+        </table>
+      </div>
+    </div>
+    <div class="col-md-7" style="border: solid 2px; padding: 5%;">
+      <div id="mensaje">
+        No está mostrando ningún archivo.
+      </div>
+      <object id="file_show" data="" type="application/pdf" width="100%" height="100%"></object>
+    </div>
+  </div>
+</div>
+
+<!-- Modal -->
+<div class="modal fade" id="modal_add_files" role="dialog">
+  <div class="modal-dialog">
+
+    <!-- Modal content-->
+    <div class="modal-content">
+      <div class="modal-header">
+        <h4 class="modal-title">Agregar archivos</h4>
+        <button type="button" class="close" data-dismiss="modal">&times;</button>
+      </div>
+      <div class="modal-body">
+        <form method="POST" id="addFilesForm" action="{{ url_for('save_files') }}" enctype="multipart/form-data">
+          <input type="hidden" value="{{ id_analysis }}" name="id_analysis" />
+          Puede agragar uno o varios archivos a la vez.
+          <div class="input-group mb-3">
+            <input type="file" name="ourfiles" id="addFile" class="form-control" multiple="" accept="application/pdf" required />
+            <div class="input-group-append">
+              <input type="submit" class="btn btn-primary" value="Cargar" />
+            </div>
+          </div>
+        </form>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-default" data-dismiss="modal">Cerrar</button>
+      </div>
+    </div>
+  </div>
+</div>
+<!-- Modal -->
+<div class="modal fade" id="modal_add_concepts" role="dialog">
+  <div class="modal-dialog">
+
+    <!-- Modal content-->
+    <div class="modal-content">
+      <div class="modal-header">
+        <h4 class="modal-title">Agregar conceptos</h4>
+        <button type="button" class="close" data-dismiss="modal">&times;</button>
+      </div>
+      <div class="modal-body">
+        <form method="POST" action="{{ url_for('add_concept') }}">
+          <input type="hidden" value="{{ id_analysis }}" name="id_analysis" />
+          Los conceptos deben estar en ingles y tener un maximo de 3 o 4 palabras.
+          <div class="input-group mb-3">
+            <input type="text" class="form-control" name="concept" required />
+            <div class="input-group-append">
+              <input type="submit" class="btn btn-primary" value="Agregar Concepto" />
+            </div>
+          </div>
+        </form>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-default" data-dismiss="modal">Cerrar</button>
+      </div>
+    </div>
+  </div>
+</div>
+<!-- Modal -->
+<div class="modal fade" id="modal_edit_concept" role="dialog">
+  <div class="modal-dialog">
+
+    <!-- Modal content-->
+    <div class="modal-content">
+      <div class="modal-header">
+        <h4 class="modal-title">Editar concepto</h4>
+        <button type="button" class="close" data-dismiss="modal">&times;</button>
+      </div>
+      <div class="modal-body">
+        <form method="POST" action="{{ url_for('update_concept') }}">
+          <input type="hidden" value="{{ id_analysis }}" name="id_analysis" />
+          <input type="hidden" name="id_concept" id="id_concept_edit" value="" />
+          <div class="input-group mb-3">
+            <input type="text" class="form-control" name="concept" id="concept_edit" required />
+            <div class="input-group-append">
+              <input type="submit" class="btn btn-primary" value="Guardar" />
+            </div>
+          </div>
+        </form>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-default" data-dismiss="modal">Cerrar</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div id="myFondo" class="fondo">
+  <div id="loader"></div>
+</div>
+
+
+
+<script>
+  function change_file(name) {
+    var element = document.getElementById("file_show");
+    element.setAttribute("data", name);
+    document.getElementById("mensaje").style.display = "none";
+  }
+
+  function edit_concept(id, concept) {
+    $("#id_concept_edit").val(id);
+    $("#concept_edit").val(concept);
+    $("#modal_edit_concept").modal();
+  }
+
+  function showLoader() {
+    document.getElementById("myFondo").style.display = "block";
+  }
+
+
+
+  // ************************ Drag and drop ***************** //
+  let dropArea = document.getElementById("drop-area")
+
+  // Prevent default drag behaviors
+  ;
+  ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+    dropArea.addEventListener(eventName, preventDefaults, false)
+    document.body.addEventListener(eventName, preventDefaults, false)
+  })
+
+  // Highlight drop area when item is dragged over it
+  ;
+  ['dragenter', 'dragover'].forEach(eventName => {
+    dropArea.addEventListener(eventName, highlight, false)
+  })
+
+  ;
+  ['dragleave', 'drop'].forEach(eventName => {
+    dropArea.addEventListener(eventName, unhighlight, false)
+  })
+
+  // Handle dropped files
+  dropArea.addEventListener('drop', handleDrop, false)
+
+  function preventDefaults(e) {
+    e.preventDefault()
+    e.stopPropagation()
+  }
+
+  function highlight(e) {
+    dropArea.classList.add('highlight')
+  }
+
+  function unhighlight(e) {
+    dropArea.classList.remove('active')
+  }
+
+  function handleDrop(e) {
+    var dt = e.dataTransfer
+    var files = dt.files
+    handleFiles(files)
+  }
+
+  function handleFiles(files) {
+    files = [...files]
+    files.forEach(uploadFile)
+  }
+
+  let list = new DataTransfer();
+
+  function uploadFile(file, i) {
+    list.items.add(file);
+    let myFileList = list.files;
+    document.getElementById("addFile").files = myFileList;
+    document.getElementById("addFilesForm").submit();
+  }
+</script>
+{% endblock %}

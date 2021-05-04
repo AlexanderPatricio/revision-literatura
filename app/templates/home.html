@@ -1,0 +1,146 @@
+{% extends 'layout/principal.html' %}
+
+{% block title %}
+Home
+{% endblock %}
+
+{% block head %}
+<style> 
+  .status0 {
+    color: black;
+    border-radius: 25px;
+    background: #ffcc00;
+    padding: 3px; 
+    width: 90px;
+    height: 30px;  
+  }
+  
+  .status1 {
+    color: black;
+    border-radius: 25px;
+    background: #00e600;
+    padding: 3px; 
+    width: 90px;
+    height: 30px;  
+  }
+  </style>
+{% endblock %}
+
+{% block content %}
+<!-- Page Heading -->
+<div align="center">
+  <h1 class="h3 mb-2 text-gray-800">Análisis</h1>
+</div>
+
+<div class="d-sm-flex align-items-center justify-content-between mb-4">
+  <h1 class="h3 mb-0 text-gray-800"></h1>
+  <a href="#" class="btn btn-primary" data-toggle="modal" title="Crear nuevo análisis" data-target="#newanalysisModal"><i class="fas fa-plus text-white-50"></i>
+    Nuevo</a>
+</div>
+
+<!-- DataTales Example -->
+<div class="card shadow mb-4">
+  <div class="card-header py-3">
+    <h6 class="m-0 font-weight-bold text-primary">Tabla de datos <a data-toggle="tooltip" title="Cada análisis permite cargar archivos y concepos para generar la matriz de concepos utilizada en revisiones de literatura. Puede crear un nuevo análisis presionando el botón Nuevo."><i class="fa fa-info-circle"></i></a></h6>
+  </div>
+  <div class="card-body">
+    <div class="table-responsive">
+      <table class="table table-bordered" id="dataTable" width="100%" cellspacing="0">
+        <thead>
+          <tr>
+            <th>#</th>
+            <th>Nombre</th>
+            <th>Estado</th>
+            <th>Opciones</th>
+          </tr>
+        </thead>
+        <tfoot>
+          <tr>
+            <th>#</th>
+            <th>Nombre</th>
+            <th>Estado</th>
+            <th>Opciones</th>
+          </tr>
+        </tfoot>
+        <tbody>
+          {% for a in analysis %}
+          <tr>
+            <td>{{ a['id_analysis'] }}</td>
+            <td>{{ a['name'] }}</td>
+            <td>
+              {% if a['status'] == '0' : %}
+                <div class="status0" align="center">En proceso!</div>
+              {% else: %}
+                <div class="status1" align="center">Finalizado!</div>
+              {% endif %}
+            </td>
+            <td>
+                <a class="btn btn-primary btn-sm" title="Ver análisis" href="{{ url_for('view_analysis', id_analysis=a['id_analysis']) }}"><i class="fa fa-eye"></i></a>
+                <button type="button" class="btn btn-danger btn-sm"
+                onclick="eliminarAnalisis({{ a['id_analysis'] }})" title="Eliminar análisis"><i class="fa fa-trash"></i></button>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- New Anális Modal-->
+<div class="modal fade" id="newanalysisModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel"
+  aria-hidden="true">
+  <div class="modal-dialog" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="exampleModalLabel">Nuevo Análisis</h5>
+        <button class="close" type="button" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">×</span>
+        </button>
+      </div>
+      <form method="POST" action="{{ url_for('new_analysis') }}" >
+        <div class="modal-body">
+          Nombre:
+          <input class="form-control" type="text" name="name" required/>
+        </div>
+        <div class="modal-footer">
+          <button class="btn btn-secondary" type="button" data-dismiss="modal">Cancelar</button>
+          <button class="btn btn-primary" type="submit">Crear</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- Confirmation delete Modal-->
+<div class="modal fade" id="deleteAnalysisModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel"
+  aria-hidden="true">
+  <div class="modal-dialog" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="exampleModalLabel">Confirmación</h5>
+        <button class="close" type="button" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">×</span>
+        </button>
+      </div>
+      <div class="modal-body">
+        ¿Esta seguro de eliminar el análisis.?
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-primary" type="button" data-dismiss="modal">Cancelar</button>
+        <a class="btn btn-danger" id="delete_button_id" title="Eliminar análisis" href="#">Eliminar</a>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+
+  function eliminarAnalisis(id) {
+    $("#delete_button_id").attr("href", "/delete_analysis/"+id);
+    $("#deleteAnalysisModal").modal();
+  }
+
+</script>
+
+{% endblock %}
